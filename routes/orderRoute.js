@@ -5,7 +5,9 @@ import {
   getMyOrder,
   getReport,
   newOrderCod,
+  newOrderOnline,
   updateStatus,
+  verifyPayment,
 } from "../controllers/orderController.js";
 import { isValidUser } from "../middlewares/isValidUser.js";
 import { isValidAdmin } from "../middlewares/isValidAdmin.js";
@@ -19,6 +21,10 @@ router.get("/order/admin/all", isValidAdmin, getAllOrdersAdmin);
 router.get("/order/:id", isValidUser, getMyOrder);
 router.put("/order/:id", isValidAdmin, updateStatus);
 router.get("/report", isValidAdmin, getReport);
+router.post("/order/new/online", isValidUser, newOrderOnline)
+router.post("/order/verify/payment", isValidUser, verifyPayment)
+
+
 
 
 

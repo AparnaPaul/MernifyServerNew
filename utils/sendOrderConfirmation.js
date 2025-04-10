@@ -22,7 +22,7 @@ const sendOrderConfirmation = async ({
             <tr>
                 <td style="padding: 10px; border: 1px solid #ddd;">${product.title}</td>
                 <td style="padding: 10px; border: 1px solid #ddd;">${product.quantity}</td>
-                <td style="padding: 10px; border: 1px solid #ddd;">₹${product.price}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">$ ${product.price}</td>
             </tr>
         `
         )
@@ -95,7 +95,7 @@ const sendOrderConfirmation = async ({
                 ${productsHtml}
             </tbody>
         </table>
-        <p class="total">Total Amount: ₹${totalAmount}</p>
+        <p class="total">Total Amount: $ ${totalAmount}</p>
         <p>Thank you for shopping with us!</p>
     </div>
 </body>

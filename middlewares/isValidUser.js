@@ -1,28 +1,29 @@
 import jwt from "jsonwebtoken";
+import { User } from "../models/userModel.js"; // ⬅️ make sure this is correct path
 
-export const isValidUser = (req, res, next) => {
-  console.log("Token----",req.cookies.token)
+export const isValidUser = async (req, res, next) => {
   const token = req.cookies.token;
+  console.log("Token ----", token);
 
   if (!token) {
-      return res.status(401).json({ message: "unauthorized" });
+    return res.status(401).json({ message: "Unauthorized - No token" });
   }
-    try {
-            
-        //decode token
-        const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
-        console.log(decodedToken, "=========Decoded token");
 
-        if (!decodedToken) {
-            return res.status(401).json({ message: "user not autherized" });
-        }
+  try {
+    const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
+    console.log("Decoded Token ===", decodedToken);
 
-        req.user = decodedToken;
-
-        //check
-        next();
-    } catch (error) {
-        console.log(error);
-        res.status(error.statusCode || 500).json({ message: error.message || "Internal server" });
+    const user = await User.findById(decodedToken.id); // ✅ Fetch full user
+    if (!user) {
+      return res.status(401).json({ message: "User not found" });
     }
-  };
+
+    req.user = user; // ✅ Attach full user object to req
+    console.log("User set on req.user ===", req.user);
+
+    next();
+  } catch (error) {
+    console.log("Auth error ===", error);
+    res.status(401).json({ message: "User not authorized" });
+  }
+};

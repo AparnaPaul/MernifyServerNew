@@ -8,7 +8,8 @@ const NODE_ENV = process.env.NODE_ENV;
 // Utility to generate token
 const generateAdminToken = (adminId) => {
   return jwt.sign(
-    { id: adminId, role: "admin" },
+    { 
+        id: adminId, role: "admin" },
     process.env.JWT_SECRET,
     { expiresIn: "24h" }
   );

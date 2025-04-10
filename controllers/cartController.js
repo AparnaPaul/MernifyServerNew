@@ -23,8 +23,8 @@ export const addToCart = tryCatch(async (req, res) => {
     console.log(category)
 
     console.log("Decoded user from req.user:", req.user);
-    console.log("User ID:", req.user.id);
-    const userId =  req.user.id;
+    console.log("User ID:", req.user._id);
+    const userId =  req.user._id;
 
 
     const cart = await Cart.findOne({
@@ -57,7 +57,7 @@ export const addToCart = tryCatch(async (req, res) => {
             product: product,
             user: userId
         })
-        const updatedCart = await Cart.find({ user: req.user._id }).populate("product"); 
+        const updatedCart = await Cart.find({ user: req.user.id }).populate("product"); 
         res.json({
             message: "Added to Cart",
             cart: updatedCart
@@ -129,6 +129,7 @@ export const fetchCart = tryCatch(async (req, res) => {
         const itemSubTotal = i.product.price * i.quantity;
         subTotal += itemSubTotal;
     })
+    subTotal = parseFloat(subTotal.toFixed(2)); // Round to 2 decimal places
 
     res.json({ cart, subTotal, totalQuantity })
 })
