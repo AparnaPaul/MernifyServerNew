@@ -2,6 +2,7 @@ import { Admin } from "../models/adminModel.js";
 import tryCatch from "../utils/tryCatch.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
+import { Order } from "../models/orderModel.js";
 
 const NODE_ENV = process.env.NODE_ENV;
 
@@ -21,6 +22,7 @@ const generateAdminToken = (adminId) => {
 export const loginAdmin = tryCatch(async (req, res) => {
   const { email, password } = req.body;
 
+    // Find admin in the database
   const admin = await Admin.findOne({ email });
   if (!admin) {
     return res.status(403).json({ message: "Invalid credentials", success: false });
@@ -63,6 +65,8 @@ export const signupAdmin = tryCatch(async (req, res) => {
   const admin = new Admin({ username, email, password: hashedPassword, mobile });
 
   await admin.save();
+  console.log("Admin created:", admin);
+
 
   const token = generateAdminToken(admin._id);
 
@@ -128,3 +132,5 @@ export const deactivateAdminAccount = tryCatch(async (req, res) => {
     success: true,
   });
 });
+
+

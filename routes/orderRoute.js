@@ -3,6 +3,7 @@ import {
   getAllOrders,
   getAllOrdersAdmin,
   getMyOrder,
+  getOrderByIdForAdmin,
   getReport,
   newOrderCod,
   newOrderOnline,
@@ -11,6 +12,7 @@ import {
 } from "../controllers/orderController.js";
 import { isValidUser } from "../middlewares/isValidUser.js";
 import { isValidAdmin } from "../middlewares/isValidAdmin.js";
+
 
 const router = express.Router();
 
@@ -23,8 +25,7 @@ router.put("/order/:id", isValidAdmin, updateStatus);
 router.get("/report", isValidAdmin, getReport);
 router.post("/order/new/online", isValidUser, newOrderOnline)
 router.post("/order/verify/payment", isValidUser, verifyPayment)
-
-
+router.get("/admin/order/:id", isValidAdmin, getOrderByIdForAdmin);
 
 
 

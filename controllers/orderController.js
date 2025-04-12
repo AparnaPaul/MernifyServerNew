@@ -79,18 +79,39 @@ export const getAllOrders = tryCatch(async (req, res) => {
 })
 
 export const getAllOrdersAdmin = tryCatch(async (req, res) => {
-    if (req.user.role !== "admin") {
-        return res.status(403).json({
-            message: "You are not admin"
-        })
+    console.log("Received request for all orders"); // Log entry point
+  
+    if (req.admin.role !== "admin") {
+      return res.status(403).json({ message: "You are not admin" });
     }
-
-    const orders = await Order.find().populate("user").sort({
-        createdAt: -1
-    })
-    res.json(orders);
-
-})
+  
+    try {
+      const orders = await Order.find().populate("user").sort({ createdAt: -1 });
+      console.log("Fetched orders:", orders); // Log orders to see if they're fetched
+      res.json(orders);
+    } catch (error) {
+      console.error("Error fetching orders:", error); // Log any errors during fetching
+      res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+  });
+  
+// controllers/orderController.js
+export const getOrderByIdForAdmin = async (req, res) => {
+    try {
+      const { id } = req.params;
+      console.log("Fetching admin order for ID:", id);
+  
+      const order = await Order.findById(id).populate("user").populate("items.product");
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+  
+      res.status(200).json(order);
+    } catch (error) {
+      console.error("Admin Order Fetch Error:", error);
+      res.status(500).json({ message: "Internal Server Error" });
+    }
+  };
 
 
 export const getMyOrder = tryCatch(async (req, res) => {
