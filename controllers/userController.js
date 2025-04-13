@@ -119,20 +119,23 @@ export const logoutUser = tryCatch(async (req, res) => {
     });
 });
 
-export const updateProfile = tryCatch(async (req, res) => {
+export const updateUserProfile = tryCatch(async (req, res) => {
     const { username, mobile } = req.body;
-    const user = await User.findByIdAndUpdate(req.user._id, { username, mobile }, { new: true });
-
-    // Remove password from the response
-    const userResponse = { ...user._doc };
-    delete userResponse.password;
-
+  
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { username, mobile },
+      { new: true }
+    );
+  
+    const { password: _, ...userResponse } = user._doc;
     res.status(200).json({
-        message: "Profile updated successfully",
-        success: true,
-        user: userResponse
+      message: "Profile updated successfully",
+      success: true,
+      user: userResponse,
     });
-});
+  });
+  
 
 
 export const deactivateAccount = tryCatch(async (req, res) => {

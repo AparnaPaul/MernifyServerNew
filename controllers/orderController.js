@@ -119,51 +119,58 @@ export const getMyOrder = tryCatch(async (req, res) => {
     res.json(order);
 })
 
-export const updateStatus = tryCatch(async (req, res) => {
-    if (req.user.role !== "admin") {
-        return res.status(403).json({
-            message: "You are not admin"
-        })
+export const updateStatus = async (req, res, next) => {
+    try {
+      const order = await Order.findById(req.params.id);
+  
+      if (!order) {
+        return res.status(404).json({ success: false, message: "Order not found" });
+      }
+  
+      order.status = req.body.status;
+      if (req.body.status === "Shipped") {
+        order.shippedAt = new Date();
+      }
+  
+      await order.save();
+  
+      res.status(200).json({ success: true, message: "Order status updated" });
+    } catch (err) {
+      console.error("Error updating order:", err);
+      res.status(500).json({ success: false, message: "Internal Server Error" });
     }
+  };
 
-    const order = await Order.findById(req.params.id)
-
-    const { status } = req.body
-    order.status = status
-
-    await order.save()
-    res.json({
-        message: "Order Status Updated",
-        order
-    })
-})
-
-export const getReport = tryCatch(async (req, res) => {
-    if (req.user.role !== "admin") {
-        return res.status(403).json({
-            message: "You are not admin"
-        })
+  export const getReport = async (req, res) => {
+    console.log("Inside /api/report controller");
+  
+    try {
+      const orders = await Order.find();
+      console.log("Orders fetched:", orders.length);
+  
+      const cod = orders.filter(order => order.method === "cod").length;
+      const online = orders.filter(order => order.method !== "cod").length;
+  
+      const products = await Product.find();
+      console.log("Products fetched:", products.length);
+  
+      const data = products.map((product) => ({
+        title: product.title,
+        sold: product.sold,
+      }));
+  
+      console.log("Report data ready:", { cod, online, data });
+  
+      res.json({ cod, online, data });
+    } catch (error) {
+      console.error("Error in getReport:", error);
+      res.status(500).json({
+        message: "Failed to generate report",
+        error: error.message,
+      });
     }
-
-    const cod = await Order.find({ method: "cod" }).countDocuments();
-    const online = await Order.find({ method: "online" }).countDocuments()
-
-    const products = await Product.find()
-
-    const data = products.map((product) => (
-        {
-            title: product.title,
-            sold: product.sold
-
-        }))
-
-    res.json({
-        cod,
-        online,
-        data
-    })
-
-})
+  };
+  
 
 import dotenv from 'dotenv'
 

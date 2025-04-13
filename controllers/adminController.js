@@ -1,7 +1,7 @@
+import bcrypt from "bcrypt";
 import { Admin } from "../models/adminModel.js";
 import tryCatch from "../utils/tryCatch.js";
 import jwt from "jsonwebtoken";
-import bcrypt from "bcrypt";
 import { Order } from "../models/orderModel.js";
 
 const NODE_ENV = process.env.NODE_ENV;
@@ -106,12 +106,18 @@ export const logoutAdmin = tryCatch(async (req, res) => {
 //   UPDATE ADMIN PROFILE
 // =======================
 export const updateAdminProfile = tryCatch(async (req, res) => {
-  const { username, mobile } = req.body;
-  const admin = await Admin.findByIdAndUpdate(
-    req.admin._id,
-    { username, mobile },
-    { new: true }
-  );
+  const { username, mobile, newPassword } = req.body;
+
+  const updateData = { username, mobile };
+
+  if (newPassword) {
+    const salt = await bcrypt.genSalt(10);
+    updateData.password = await bcrypt.hash(newPassword, salt);
+  }
+
+  const admin = await Admin.findByIdAndUpdate(req.admin._id, updateData, {
+    new: true,
+  });
 
   const { password: _, ...adminResponse } = admin._doc;
   res.status(200).json({
@@ -120,6 +126,35 @@ export const updateAdminProfile = tryCatch(async (req, res) => {
     admin: adminResponse,
   });
 });
+
+
+//Add new Admin
+//____________________
+
+export const addNewAdmin = tryCatch(async (req, res) => {
+  const { username, email, password, mobile } = req.body;
+
+  const existing = await Admin.findOne({ email });
+  if (existing) {
+    return res.status(400).json({ message: 'Admin already exists with this email' });
+  }
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  const newAdmin = await Admin.create({
+    username,
+    email,
+    mobile,
+    password: hashedPassword,
+    role: "admin", // Ensure role is set
+  });
+
+  res.status(201).json({
+    message: "New admin created successfully",
+    adminId: newAdmin._id,
+  });
+});
+
 
 // =======================
 // DEACTIVATE ADMIN ACCOUNT
