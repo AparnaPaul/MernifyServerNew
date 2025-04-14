@@ -105,23 +105,35 @@ export const logoutAdmin = tryCatch(async (req, res) => {
 // =======================
 //   UPDATE ADMIN PROFILE
 // =======================
+// Update admin profile with optional password change
 export const updateAdminProfile = tryCatch(async (req, res) => {
   const { username, mobile, newPassword } = req.body;
 
   const updateData = { username, mobile };
 
+  // If a new password is provided, hash it and add it to the updateData
   if (newPassword) {
+    // Generate a salt and hash the new password
     const salt = await bcrypt.genSalt(10);
-    updateData.password = await bcrypt.hash(newPassword, salt);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+    updateData.password = hashedPassword; // Store the hashed password
   }
 
-  const admin = await Admin.findByIdAndUpdate(req.admin._id, updateData, {
-    new: true,
-  });
+  // Update the admin profile in the database
+  const admin = await Admin.findByIdAndUpdate(req.admin._id, updateData, { new: true });
 
+  // Invalidate the old JWT token immediately after the password change
+  res.clearCookie("token");
+
+  // Log the updated admin object for debugging
+  console.log("Updated Admin Profile:", admin);
+
+  // Remove the password from the response object to avoid sending it back to the client
   const { password: _, ...adminResponse } = admin._doc;
+
+  // Return the updated admin details excluding the password
   res.status(200).json({
-    message: "Profile updated successfully",
+    message: "Profile updated successfully, please log in again.",
     success: true,
     admin: adminResponse,
   });

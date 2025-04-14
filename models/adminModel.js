@@ -17,7 +17,7 @@ const adminSchema = new mongoose.Schema({
     },
     mobile: {
         type: String,
-        required: true
+      
     },
     role: {
         type: String,

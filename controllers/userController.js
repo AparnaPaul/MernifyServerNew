@@ -6,100 +6,105 @@ import { generateToken } from "../utils/token.js";
 
 const NODE_ENV = process.env.NODE_ENV;
 
+
 export const loginUser = async (req, res, next) => {
     try {
-        //collect user data
-        const { email, password} = req.body;
-
-        //data validation
-        if (!email || !password) {
-            return res.status(400).json({ message: "all fields required" });
-        }
-
-        // user exist - check
-        const userExist = await User.findOne({ email });
-
-        if (!userExist) {
-            return res.status(404).json({ message: "user not found" });
-        }
-
-        //password match with DB
-        const passwordMatch = bcrypt.compareSync(password, userExist.password);
-
-        if (!passwordMatch) {
-            return res.status(401).json({ message: "invalid credentials" });
-        }
-
-        //generate token
-        const token = generateToken(userExist._id, "user");
-
-        //store token
-        res.cookie("token", token, {
-            sameSite: NODE_ENV === "production" ? "None" : "Lax",
-            secure: NODE_ENV === "production",
-            httpOnly: NODE_ENV === "production",
-        });
-
-        delete userExist._doc.password;
-        res.json({ user: {
-            username: userExist.username,
-            email: userExist.email,
-            role: "user",
-         }, message: "Login success" });
-
+      const { email, password } = req.body;
+  
+      if (!email || !password) {
+        return res.status(400).json({ message: "All fields are required" });
+      }
+  
+      const userExist = await User.findOne({ email });
+  
+      if (!userExist) {
+        return res.status(404).json({ message: "User not found" });
+      }
+  
+      const passwordMatch = bcrypt.compareSync(password, userExist.password);
+  
+      if (!passwordMatch) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+  
+      const token = generateToken(userExist._id, "user");
+  
+      res.cookie("token", token, {
+        sameSite: NODE_ENV === "production" ? "None" : "Lax",
+        secure: NODE_ENV === "production",
+        httpOnly: NODE_ENV === "production",
+      });
+  
+      delete userExist._doc.password;
+      res.json({
+        user: {
+          username: userExist.username,
+          email: userExist.email,
+          role: "user",
+        },
+        message: "Login success",
+      });
     } catch (error) {
-        res.status(error.statusCode || 500).json({ message: error.message || "Internal server" });
+      res.status(error.statusCode || 500).json({ message: error.message || "Internal server error" });
     }
-};
-
-
-export const signupUser = tryCatch(async (req, res) => {
+  };
+  export const signupUser = tryCatch(async (req, res) => {
     const { username, email, password, mobile } = req.body;
 
+    // Validate all required fields
+    if (!username || !email || !password || !mobile) {
+        return res.status(400).json({
+            message: "All fields are required",
+            success: false,
+        });
+    }
+
+    // Check if the email already exists (ignore username uniqueness)
     const existingUser = await User.findOne({ email });
     if (existingUser) {
         return res.status(409).json({
-            message: "User already exists, you can login",
-            success: false
+            message: "Email already exists, you can login",
+            success: false,
         });
     }
 
-
+    // Hash the password before saving
     const hashedPassword = await bcrypt.hash(password, 10);
 
-
+    // Create and save the user
     const user = new User({
-        username,
+        username,  // No uniqueness check on username
         email,
         password: hashedPassword,
-        mobile
+        mobile,
     });
 
     await user.save();
 
+    // Generate JWT token
     const jwtToken = jwt.sign(
         { email: user.email, _id: user._id },
         process.env.JWT_SECRET,
         { expiresIn: "24h" }
     );
 
-    // Store token in cookie
-    res.cookie('token', jwtToken, { sameSite: "None",
-        secure: false,
-        httpOnly: false, path: "/",
+    res.cookie('token', jwtToken, {
+        sameSite: "None",
+        secure: false, // Set to true if you're using HTTPS
+        httpOnly: false,
+        path: "/",
     });
 
-    // Remove password from the response
+    // Remove the password before sending the response
     const userResponse = { ...user._doc };
     delete userResponse.password;
 
     res.status(201).json({
         message: "Signup success",
         success: true,
-        user: userResponse
+        user: userResponse,
     });
 });
-
 
 export const myProfile = tryCatch(async (req, res) => {
     const user = await User.findById(req.user._id);
@@ -120,23 +125,37 @@ export const logoutUser = tryCatch(async (req, res) => {
 });
 
 export const updateUserProfile = tryCatch(async (req, res) => {
-    const { username, mobile } = req.body;
+    const { username, mobile, password } = req.body;
   
-    const user = await User.findByIdAndUpdate(
-      req.user._id,
-      { username, mobile },
-      { new: true }
-    );
+    // Find user by ID (from decoded JWT token)
+    const user = await User.findById(req.user._id); // req.user should have the user from the JWT middleware
   
-    const { password: _, ...userResponse } = user._doc;
+    if (!user) {
+      return res.status(404).json({ message: "User not found", success: false });
+    }
+  
+    // Update the username and mobile if provided
+    if (username) user.username = username;
+    if (mobile) user.mobile = mobile;
+  
+    // If a new password is provided, hash it and update it
+    if (password) {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      user.password = hashedPassword;
+    }
+  
+    // Save the updated user
+    await user.save();
+  
     res.status(200).json({
       message: "Profile updated successfully",
       success: true,
-      user: userResponse,
+      user: {
+        username: user.username,
+        mobile: user.mobile,
+      },
     });
   });
-  
-
 
 export const deactivateAccount = tryCatch(async (req, res) => {
     await User.findByIdAndDelete(req.user._id);
