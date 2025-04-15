@@ -179,5 +179,3 @@ export const deactivateAdminAccount = tryCatch(async (req, res) => {
     success: true,
   });
 });
-
-

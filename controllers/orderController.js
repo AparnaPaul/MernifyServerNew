@@ -114,11 +114,31 @@ export const getOrderByIdForAdmin = async (req, res) => {
   };
 
 
-export const getMyOrder = tryCatch(async (req, res) => {
-    const order = await Order.findById(req.params.id).populate("items.product").populate("user")
-    res.json(order);
-})
+// For a user to view their own order details
 
+export const getMyOrder = tryCatch(async (req, res) => {
+    console.log("Fetching order with ID:", req.params.id); // Log the ID of the order being requested
+    
+    const order = await Order.findById(req.params.id)
+      .populate("items.product") // Populate product details
+      .populate("user");  // Populate user details
+    
+    if (!order) {
+      console.log("Order not found"); // Log when order is not found
+      return res.status(404).json({ message: "Order not found" });
+    }
+  
+    // Check if the order belongs to the logged-in user
+    if (order.user._id.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      console.log("Unauthorized access attempt"); // Log unauthorized access attempt
+      return res.status(403).json({ message: "This is not your order" });
+    }
+  
+    console.log("Fetched order:", order);  // Log the fetched order
+  
+    res.json(order);
+  });
+  
 export const updateStatus = async (req, res, next) => {
     try {
       const order = await Order.findById(req.params.id);

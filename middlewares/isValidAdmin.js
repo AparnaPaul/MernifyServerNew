@@ -19,7 +19,7 @@ export const isValidAdmin = async (req, res, next) => {
     }
 
     console.log("Decoded Token:", decodedToken);
-    console.log("Trying to find admin with ID:", decodedToken.id);
+console.log("Trying to find admin with ID:", decodedToken.id);
 
     // Check if admin still exists
     const admin = await Admin.findById(decodedToken.id);
