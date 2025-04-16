@@ -11,6 +11,7 @@ router.get('/admin/me', isValidAdmin, myProfile)
 router.get('/admin/logout', logoutAdmin)
 router.put('/admin/update-profile', isValidAdmin, updateAdminProfile)
 router.post('/admin/addAdmin', isValidAdmin, addNewAdmin)
+
 router.post('/admin/deactivate/:id', isValidAdmin, deactivateAdminAccount)
 
 
