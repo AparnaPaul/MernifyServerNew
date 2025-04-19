@@ -84,6 +84,7 @@ export const loginAdmin = tryCatch(async (req, res) => {
     message: "Login success",
     success: true,
     admin: { ...adminResponse, role: "admin" },
+    token: token
   });
 });
 
