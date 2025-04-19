@@ -105,6 +105,7 @@ export const loginUser = async (req, res, next) => {
         email: userExist.email,
         role: "user",
       },
+      token: token,
       message: "Login success",
     });
   } catch (error) {
